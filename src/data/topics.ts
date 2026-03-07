@@ -1,0 +1,22 @@
+export const randomTopics = [
+  "Describe your favorite childhood memory.",
+  "If you could have dinner with any historical figure, who would it be and why?",
+  "What is the most challenging thing you have ever done?",
+  "Explain a complex concept to a five-year-old.",
+  "If you could travel anywhere in the world right now, where would you go?",
+  "What is your favorite book or movie and why?",
+  "Discuss the importance of a healthy lifestyle.",
+  "If you won the lottery, what is the first thing you would do?",
+  "Describe your ideal job.",
+  "What technology do you think will change the future the most?",
+  "Talk about a teacher who influenced you.",
+  "What is your favorite hobby and how did you get started?",
+  "If you could change one thing about the world, what would it be?",
+  "Describe a time you failed and what you learned from it.",
+  "What makes a good leader?",
+  "Talk about a tradition in your family.",
+  "If you could have any superpower, what would it be?",
+  "What is the best advice you have ever received?",
+  "Describe your perfect weekend.",
+  "What is something you are grateful for today?"
+];

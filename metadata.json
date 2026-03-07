@@ -1,0 +1,7 @@
+{
+  "name": "SpeakUp_final",
+  "description": "AI-powered speaking coach helping users improve confidence, clarity, and pacing.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
