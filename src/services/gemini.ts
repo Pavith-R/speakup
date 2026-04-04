@@ -228,7 +228,7 @@ export async function generateInterviewQuestions(
     
     Return ONLY a JSON array of strings, e.g. ["Question 1", "Question 2", "Question 3"]. Do not include markdown formatting.`;
 
-    const response = await ai.models.generateContent({
+    const generatePromise = ai.models.generateContent({
       model: model,
       contents: {
         parts: [{ text: prompt }]
@@ -241,6 +241,12 @@ export async function generateInterviewQuestions(
         }
       }
     });
+
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Generation timed out')), 30000)
+    );
+
+    const response = await Promise.race([generatePromise, timeoutPromise]) as any;
 
     const text = response.text;
     if (!text) {

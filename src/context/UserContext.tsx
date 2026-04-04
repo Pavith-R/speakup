@@ -227,11 +227,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (sessionData.audioData) {
       try {
         const audioRef = ref(storage, `users/${user.uid}/sessions/${sessionData.id}/audio.webm`);
-        // Upload base64 string
-        await uploadString(audioRef, sessionData.audioData, 'base64', {
-          contentType: 'audio/webm'
-        });
-        audioUrl = await getDownloadURL(audioRef);
+        
+        // Wrap upload and URL retrieval in a timeout to prevent hanging
+        const uploadTask = async () => {
+          await uploadString(audioRef, sessionData.audioData!, 'base64', {
+            contentType: 'audio/webm'
+          });
+          return await getDownloadURL(audioRef);
+        };
+        
+        const timeoutPromise = new Promise<string>((_, reject) => 
+          setTimeout(() => reject(new Error('Storage upload timed out')), 15000)
+        );
+        
+        audioUrl = await Promise.race([uploadTask(), timeoutPromise]);
       } catch (error) {
         console.error("Error uploading audio to Storage:", error);
         // Continue without audio URL if upload fails
@@ -250,7 +259,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const sessionRef = doc(db, 'users', user.uid, 'sessions', sessionData.id);
-      await setDoc(sessionRef, newSession);
+      
+      const setDocPromise = setDoc(sessionRef, newSession);
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Firestore save timed out')), 10000)
+      );
+      
+      await Promise.race([setDocPromise, timeoutPromise]);
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/sessions/${sessionData.id}`);
     }

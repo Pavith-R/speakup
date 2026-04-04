@@ -163,7 +163,7 @@ export default function InterviewSimulator() {
       });
       
       const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Analysis timed out (60s limit).')), 60000)
+        setTimeout(() => reject(new Error('Analysis timed out (30s limit).')), 30000)
       );
 
       const result = await Promise.race([analysisPromise, timeoutPromise]);

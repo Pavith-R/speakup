@@ -120,7 +120,7 @@ export default function Record() {
         includeContentAnalysis: false
       });
       const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Analysis timed out (60s limit). Please check your connection.')), 60000)
+        setTimeout(() => reject(new Error('Analysis timed out (30s limit). Please check your connection.')), 30000)
       );
 
       const result = await Promise.race([analysisPromise, timeoutPromise]);
