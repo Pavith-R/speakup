@@ -161,9 +161,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const loadedSessions: Session[] = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
+        
+        // Handle Firestore Timestamp conversion
+        let sessionDate = data.date;
+        if (sessionDate && typeof sessionDate.toDate === 'function') {
+          sessionDate = sessionDate.toDate().toISOString();
+        } else if (sessionDate instanceof Date) {
+          sessionDate = sessionDate.toISOString();
+        } else if (!sessionDate) {
+          sessionDate = new Date().toISOString(); // Fallback if missing
+        }
+
         loadedSessions.push({
           ...data,
           id: doc.id,
+          date: sessionDate,
           // Convert legacy base64 to data URL if audioUrl is missing
           audioUrl: data.audioUrl || (data.audioData ? `data:audio/webm;base64,${data.audioData}` : undefined)
         } as Session);
