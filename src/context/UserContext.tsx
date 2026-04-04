@@ -180,8 +180,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Login failed:", error);
+    } catch (error: any) {
+      if (
+        error.code !== 'auth/popup-closed-by-user' && 
+        error.code !== 'auth/user-cancelled' && 
+        error.code !== 'auth/cancelled-popup-request'
+      ) {
+        console.error("Login failed:", error);
+      }
       throw error;
     }
   };

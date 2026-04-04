@@ -30,7 +30,16 @@ export default function Auth() {
       setError(null);
       await login();
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google');
+      if (
+        err.code === 'auth/popup-closed-by-user' || 
+        err.code === 'auth/user-cancelled' || 
+        err.code === 'auth/cancelled-popup-request'
+      ) {
+        // User intentionally closed the popup, clear the error
+        setError(null);
+      } else {
+        setError(err.message || 'Failed to sign in with Google');
+      }
       setIsLoading(false);
     }
   };
