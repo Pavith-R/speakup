@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mic, Square, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Mic, Square, Loader2, AlertCircle, ArrowLeft, Sparkles } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { analyzeSpeech } from '../services/gemini';
 
@@ -116,7 +116,8 @@ export default function Record() {
       const analysisPromise = analyzeSpeech(base64Data, simpleMimeType, {
         goals: user?.goals || [],
         experienceLevel: user?.experienceLevel || '',
-        weakness: user?.weakness || ''
+        weakness: user?.weakness || '',
+        includeContentAnalysis: false
       });
       const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Analysis timed out (60s limit). Please check your connection.')), 60000)
@@ -125,16 +126,19 @@ export default function Record() {
       const result = await Promise.race([analysisPromise, timeoutPromise]);
       console.log('Analysis complete:', result);
       
+      const audioUrl = URL.createObjectURL(audioBlob);
+
       const sessionData = {
         id: Date.now().toString(),
-        date: new Date().toISOString(),
         duration,
         score: result.score,
         transcript: result.transcript,
-        feedback: result.feedback
+        feedback: result.feedback,
+        audioData: base64Data,
+        audioUrl // Keep for immediate playback before refresh
       };
 
-      addSession(sessionData);
+      await addSession(sessionData);
       navigate(`/feedback/${sessionData.id}`);
     } catch (err: any) {
       console.error('Analysis failed:', err);
@@ -153,7 +157,7 @@ export default function Record() {
     <div className="max-w-4xl mx-auto">
       <Link 
         to="/practice" 
-        className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors px-4 py-2 rounded-lg hover:bg-white/5"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Practice
@@ -169,11 +173,15 @@ export default function Record() {
               exit={{ opacity: 0, scale: 0.9 }}
               className="flex flex-col items-center gap-12 w-full max-w-md"
             >
-              <div className="text-center space-y-2">
-                <h2 className="text-4xl font-bold text-electric-blue tracking-tight">
+              <div className="text-center space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm font-medium">
+                  <Sparkles className="w-3 h-3" />
+                  Free Speak Mode
+                </div>
+                <h2 className="text-5xl font-bold text-white tracking-tight">
                   {isRecording ? 'Listening...' : 'Ready to Practice?'}
                 </h2>
-                <p className="text-electric-blue-dark text-lg">
+                <p className="text-zinc-400 text-lg">
                   {isRecording ? 'Speak naturally. We are analyzing your speech.' : 'Press the button and start speaking.'}
                 </p>
               </div>
@@ -185,39 +193,39 @@ export default function Record() {
                 </div>
               )}
 
-              <div className="relative">
+              <div className="relative group">
                 {/* Pulsing rings */}
                 {isRecording && (
                   <>
                     <motion.div
                       animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
                       transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                      className="absolute inset-0 bg-electric-blue/20 rounded-full blur-xl"
+                      className="absolute inset-0 bg-red-500/20 rounded-full blur-xl"
                     />
                     <motion.div
                       animate={{ scale: [1, 1.2, 1], opacity: [0.8, 0.2, 0.8] }}
                       transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 0.5 }}
-                      className="absolute inset-0 bg-electric-blue/10 rounded-full blur-lg"
+                      className="absolute inset-0 bg-red-500/10 rounded-full blur-lg"
                     />
                   </>
                 )}
 
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
-                  className={`relative z-10 w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl
+                  className={`relative z-10 w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 border-4 shadow-2xl
                     ${isRecording 
-                      ? 'bg-red-500 hover:bg-red-600 shadow-red-500/30' 
-                      : 'bg-electric-blue hover:bg-electric-blue-dark shadow-electric-blue/30 hover:scale-105'}`}
+                      ? 'bg-red-600 border-red-500 text-white hover:scale-105 shadow-red-900/50' 
+                      : 'bg-purple-600 border-purple-500 text-white hover:scale-105 hover:bg-purple-500 shadow-purple-900/50'}`}
                 >
                   {isRecording ? (
-                    <Square className="w-12 h-12 text-white fill-current" />
+                    <Square className="w-12 h-12 fill-current" />
                   ) : (
-                    <Mic className="w-12 h-12 text-blue-600" />
+                    <Mic className="w-12 h-12" />
                   )}
                 </button>
               </div>
 
-              <div className="font-mono text-5xl font-medium text-electric-blue tabular-nums tracking-wider">
+              <div className="font-mono text-6xl font-medium text-white tabular-nums tracking-wider">
                 {formatTime(duration)}
               </div>
             </motion.div>
@@ -226,26 +234,29 @@ export default function Record() {
               key="analyzing-ui"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center gap-6 text-center"
+              className="flex flex-col items-center gap-8 text-center"
             >
-              <div className="relative w-24 h-24">
-                <div className="absolute inset-0 border-4 border-navy-800 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-electric-blue rounded-full border-t-transparent animate-spin"></div>
-                <Loader2 className="absolute inset-0 m-auto w-8 h-8 text-electric-blue animate-pulse" />
+              <div className="relative w-32 h-32">
+                <div className="absolute inset-0 border-4 border-zinc-800 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-white rounded-full border-t-transparent animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Sparkles className="w-12 h-12 text-white animate-pulse" />
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-electric-blue mb-2">Analyzing Speech...</h2>
-                <p className="text-electric-blue-dark">Transcribing audio and checking for clarity, pacing, and structure.</p>
-                <p className="text-electric-blue-dark text-sm mt-4">This may take a few seconds.</p>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold text-white">Analyzing Speech...</h2>
+                <p className="text-zinc-400 text-lg max-w-md">Transcribing audio and checking for clarity, pacing, and structure.</p>
+                <p className="text-zinc-500 text-sm mt-4">This may take a few seconds.</p>
               </div>
               
               <button 
                 onClick={() => setIsAnalyzing(false)}
-                className="mt-4 text-electric-blue-dark hover:text-electric-blue text-sm underline"
+                className="mt-4 text-zinc-400 hover:text-white text-sm underline transition-colors"
               >
                 Cancel
               </button>
             </motion.div>
+
           )}
         </AnimatePresence>
       </div>

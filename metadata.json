@@ -1,6 +1,6 @@
 {
-  "name": "SpeakUp_final",
-  "description": "AI-powered speaking coach helping users improve confidence, clarity, and pacing.",
+  "name": "SpeakUp",
+  "description": "A speaking practice application with dashboard, practice sessions, and settings.",
   "requestFramePermissions": [
     "microphone"
   ]

@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user profile in the application.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user's unique ID." },
+        "name": { "type": "string", "description": "The user's display name." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "isOnboarded": { "type": "boolean", "description": "Whether the user has completed onboarding." },
+        "goals": { "type": "array", "items": { "type": "string" }, "description": "The user's primary goals." },
+        "experienceLevel": { "type": "string", "description": "The user's experience level." },
+        "weakness": { "type": "string", "description": "The user's self-identified weakness." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user profile was created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the user profile was last updated." }
+      },
+      "required": ["uid", "name", "email", "isOnboarded", "createdAt", "updatedAt"]
+    },
+    "Session": {
+      "title": "Session",
+      "description": "A practice session recording and analysis.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The session's unique ID." },
+        "userId": { "type": "string", "description": "The ID of the user who created the session." },
+        "date": { "type": "string", "format": "date-time", "description": "When the session was recorded." },
+        "duration": { "type": "number", "description": "Duration of the recording in seconds." },
+        "score": { "type": "number", "description": "Overall score of the session." },
+        "transcript": { "type": "string", "description": "Transcript of the recording." },
+        "feedback": { "type": "object", "description": "Detailed feedback from the AI." },
+        "audioData": { "type": "string", "description": "Legacy Base64 encoded audio data (optional)." },
+        "audioUrl": { "type": "string", "description": "URL to the audio file in Firebase Storage (optional)." }
+      },
+      "required": ["id", "userId", "date", "duration", "score", "transcript", "feedback"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles."
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/Session" },
+      "description": "Practice sessions for a specific user."
+    }
+  }
+}

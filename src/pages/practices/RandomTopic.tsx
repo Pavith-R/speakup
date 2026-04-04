@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, Mic, Square, Loader2, AlertCircle, RefreshCw, Play } from 'lucide-react';
+import { ArrowLeft, Clock, Mic, Square, Loader2, AlertCircle, RefreshCw, Play, Sparkles, Shuffle } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { analyzeSpeech } from '../../services/gemini';
 import { randomTopics } from '../../data/topics';
@@ -151,7 +151,8 @@ export default function RandomTopic() {
         goals: user?.goals || [],
         experienceLevel: user?.experienceLevel || '',
         weakness: user?.weakness || '',
-        context: `The user is practicing impromptu speaking on the topic: "${topic}".`
+        context: `The user is practicing impromptu speaking on the topic: "${topic}".`,
+        includeContentAnalysis: false
       });
       
       const timeoutPromise = new Promise<never>((_, reject) => 
@@ -160,16 +161,19 @@ export default function RandomTopic() {
 
       const result = await Promise.race([analysisPromise, timeoutPromise]);
       
+      const audioUrl = URL.createObjectURL(audioBlob);
+
       const sessionData = {
         id: Date.now().toString(),
-        date: new Date().toISOString(),
         duration: speakTime - timeLeft, // Actual duration might be slightly less if stopped early
         score: result.score,
         transcript: result.transcript,
-        feedback: result.feedback
+        feedback: result.feedback,
+        audioData: base64Data,
+        audioUrl
       };
 
-      addSession(sessionData);
+      await addSession(sessionData);
       navigate(`/feedback/${sessionData.id}`);
     } catch (err: any) {
       console.error('Analysis failed:', err);
@@ -188,7 +192,7 @@ export default function RandomTopic() {
     <div className="max-w-4xl mx-auto">
       <Link 
         to="/practice/structured" 
-        className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors px-4 py-2 rounded-lg hover:bg-white/5"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Structured Practice
@@ -202,12 +206,17 @@ export default function RandomTopic() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-lg bg-navy-900 border border-navy-800 rounded-2xl p-8"
+              className="w-full max-w-lg glass-card p-8"
             >
-              <h1 className="text-3xl font-bold text-white mb-2 text-center">Random Topic Challenge</h1>
-              <p className="text-slate-400 text-center mb-8">
-                Speak on a randomly selected topic. Choose your prep time and speaking duration.
-              </p>
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-green-500/10 border border-green-500/20 mb-6">
+                  <Shuffle className="w-8 h-8 text-green-400" />
+                </div>
+                <h1 className="text-3xl font-bold text-white mb-2">Random Topic Challenge</h1>
+                <p className="text-zinc-400">
+                  Speak on a randomly selected topic. Choose your prep time and speaking duration.
+                </p>
+              </div>
 
               {error && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg flex items-center gap-2 text-sm mb-6">
@@ -216,18 +225,18 @@ export default function RandomTopic() {
                 </div>
               )}
 
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-3">Preparation Time</label>
+                  <label className="block text-sm font-medium text-zinc-400 mb-4 uppercase tracking-wider">Preparation Time</label>
                   <div className="grid grid-cols-4 gap-3">
                     {[0, 15, 30, 60].map((t) => (
                       <button
                         key={t}
                         onClick={() => setPrepTime(t)}
-                        className={`py-2 px-4 rounded-lg font-medium transition-colors ${
+                        className={`py-3 px-4 rounded-lg font-medium transition-all ${
                           prepTime === t 
-                            ? 'bg-electric-blue text-navy-950' 
-                            : 'bg-navy-800 text-slate-400 hover:bg-navy-700'
+                            ? 'bg-green-600 text-white shadow-lg shadow-green-900/20' 
+                            : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
                         }`}
                       >
                         {t === 0 ? 'None' : `${t}s`}
@@ -237,16 +246,16 @@ export default function RandomTopic() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-3">Speaking Duration</label>
+                  <label className="block text-sm font-medium text-zinc-400 mb-4 uppercase tracking-wider">Speaking Duration</label>
                   <div className="grid grid-cols-4 gap-3">
                     {[30, 60, 90, 120].map((t) => (
                       <button
                         key={t}
                         onClick={() => setSpeakTime(t)}
-                        className={`py-2 px-4 rounded-lg font-medium transition-colors ${
+                        className={`py-3 px-4 rounded-lg font-medium transition-all ${
                           speakTime === t 
-                            ? 'bg-electric-blue text-navy-950' 
-                            : 'bg-navy-800 text-slate-400 hover:bg-navy-700'
+                            ? 'bg-green-600 text-white shadow-lg shadow-green-900/20' 
+                            : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
                         }`}
                       >
                         {t >= 60 ? `${t/60}m` : `${t}s`}
@@ -257,9 +266,9 @@ export default function RandomTopic() {
 
                 <button
                   onClick={startPrep}
-                  className="w-full py-4 rounded-xl bg-electric-blue hover:bg-electric-blue-dark text-navy-950 font-bold text-lg transition-colors flex items-center justify-center gap-2 mt-4"
+                  className="w-full py-4 rounded-full bg-green-600 text-white font-bold text-lg hover:bg-green-500 transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg shadow-green-900/20"
                 >
-                  <Play className="w-5 h-5" />
+                  <Play className="w-5 h-5 fill-current" />
                   Start Challenge
                 </button>
               </div>
@@ -272,24 +281,50 @@ export default function RandomTopic() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="text-center w-full max-w-2xl"
+              className="text-center w-full max-w-3xl"
             >
-              <div className="mb-8">
-                <span className="text-electric-blue font-medium tracking-wider uppercase text-sm">Your Topic</span>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mt-4 leading-tight">
+              <div className="mb-12">
+                <span className="inline-block px-4 py-1 rounded-full bg-green-500/10 text-green-400 font-medium tracking-wider uppercase text-sm mb-4 border border-green-500/20">
+                  Your Topic
+                </span>
+                <h2 className="text-4xl md:text-6xl font-bold text-white leading-tight tracking-tight">
                   {topic}
                 </h2>
               </div>
 
-              <div className="w-48 h-48 rounded-full border-4 border-navy-800 flex flex-col items-center justify-center mx-auto mb-8 relative">
-                <div className="absolute inset-0 rounded-full border-4 border-yellow-500 border-t-transparent animate-spin" style={{ animationDuration: `${prepTime}s` }}></div>
-                <span className="text-sm text-slate-400 uppercase tracking-wider mb-1">Prep Time</span>
-                <span className="text-5xl font-mono font-bold text-yellow-500">{timeLeft}</span>
+              <div className="relative w-64 h-64 mx-auto mb-12 flex items-center justify-center">
+                <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+                  <circle
+                    cx="128"
+                    cy="128"
+                    r="120"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="transparent"
+                    className="text-zinc-900"
+                  />
+                  <circle
+                    cx="128"
+                    cy="128"
+                    r="120"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="transparent"
+                    strokeDasharray={2 * Math.PI * 120}
+                    strokeDashoffset={2 * Math.PI * 120 * (1 - timeLeft / prepTime)}
+                    className="text-green-500 transition-all duration-1000 ease-linear"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="flex flex-col items-center absolute inset-0 justify-center">
+                  <span className="text-sm text-zinc-500 uppercase tracking-wider mb-2">Prep Time</span>
+                  <span className="text-7xl font-mono font-bold text-white tabular-nums">{timeLeft}</span>
+                </div>
               </div>
 
               <button
                 onClick={startSpeaking}
-                className="px-8 py-3 rounded-full bg-navy-800 hover:bg-navy-700 text-white font-medium transition-colors"
+                className="px-8 py-4 rounded-full bg-green-600 hover:bg-green-500 text-white font-medium transition-colors shadow-lg shadow-green-900/20"
               >
                 Skip Prep & Start Speaking
               </button>
@@ -302,28 +337,28 @@ export default function RandomTopic() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="text-center w-full max-w-2xl"
+              className="text-center w-full max-w-3xl"
             >
               <div className="mb-12">
-                <h2 className="text-2xl font-bold text-slate-300 mb-2">{topic}</h2>
-                <div className="flex items-center justify-center gap-2 text-red-400 animate-pulse">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <span className="font-medium uppercase tracking-wider text-sm">Recording</span>
+                <h2 className="text-3xl font-bold text-zinc-300 mb-4">{topic}</h2>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 animate-pulse">
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                  <span className="font-medium uppercase tracking-wider text-xs">Recording</span>
                 </div>
               </div>
 
-              <div className="relative mb-12">
-                <div className="text-8xl font-mono font-bold text-white tabular-nums">
+              <div className="relative mb-16">
+                <div className="text-9xl font-mono font-bold text-white tabular-nums tracking-tight">
                   {formatTime(timeLeft)}
                 </div>
-                <p className="text-slate-500 mt-2">Time Remaining</p>
+                <p className="text-zinc-500 mt-4 text-lg">Time Remaining</p>
               </div>
 
               <button
                 onClick={stopRecording}
-                className="w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors shadow-lg shadow-red-500/30 mx-auto"
+                className="w-24 h-24 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center transition-all mx-auto group"
               >
-                <Square className="w-8 h-8 text-white fill-current" />
+                <Square className="w-10 h-10 text-white fill-current group-hover:scale-90 transition-transform" />
               </button>
             </motion.div>
           )}
@@ -333,16 +368,18 @@ export default function RandomTopic() {
               key="analyzing"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center gap-6 text-center"
+              className="flex flex-col items-center gap-8 text-center"
             >
-              <div className="relative w-24 h-24">
-                <div className="absolute inset-0 border-4 border-navy-800 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-electric-blue rounded-full border-t-transparent animate-spin"></div>
-                <Loader2 className="absolute inset-0 m-auto w-8 h-8 text-electric-blue animate-pulse" />
+              <div className="relative w-32 h-32">
+                <div className="absolute inset-0 border-4 border-zinc-900 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-white rounded-full border-t-transparent animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Sparkles className="w-12 h-12 text-white animate-pulse" />
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-electric-blue mb-2">Analyzing Session...</h2>
-                <p className="text-electric-blue-dark">Reviewing your response to "{topic}"</p>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold text-white">Analyzing Session...</h2>
+                <p className="text-zinc-400 text-lg">Reviewing your response to "{topic}"</p>
               </div>
             </motion.div>
           )}

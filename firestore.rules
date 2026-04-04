@@ -1,0 +1,127 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required, immutable) - User ID
+    //   - name: string (required) - Display name
+    //   - email: string (required) - Email address
+    //   - isOnboarded: boolean (required) - Onboarding status
+    //   - goals: list (optional) - User goals
+    //   - experienceLevel: string (optional) - Experience level
+    //   - weakness: string (optional) - Self-identified weakness
+    //   - createdAt: timestamp (required, immutable) - Creation time
+    //   - updatedAt: timestamp (required) - Last update time
+    //
+    // Collection: users/{userId}/sessions
+    // Document ID: {sessionId}
+    // Fields:
+    //   - id: string (required, immutable) - Session ID
+    //   - userId: string (required, immutable) - User ID
+    //   - date: timestamp (required, immutable) - Recording date
+    //   - duration: number (required) - Duration in seconds
+    //   - score: number (required) - Overall score
+    //   - transcript: string (required) - Transcript
+    //   - feedback: map (required) - Detailed feedback
+    //   - audioData: string (optional) - Base64 audio data
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+    
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+    
+    // Domain Validators
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'name', 'email', 'isOnboarded', 'goals', 'experienceLevel', 'weakness', 'createdAt', 'updatedAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.email is string && isValidEmail(data.email) && data.email.size() < 100 &&
+             data.isOnboarded is bool &&
+             (!('goals' in data) || (data.goals is list && data.goals.size() <= 10)) &&
+             (!('experienceLevel' in data) || (data.experienceLevel is string && data.experienceLevel.size() <= 50)) &&
+             (!('weakness' in data) || (data.weakness is string && data.weakness.size() <= 100)) &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    
+    function isValidSession(data) {
+      return hasOnlyAllowedFields(['id', 'userId', 'date', 'duration', 'score', 'transcript', 'feedback', 'audioData', 'audioUrl']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.date is timestamp &&
+             data.duration is number && data.duration >= 0 &&
+             data.score is number && data.score >= 0 && data.score <= 100 &&
+             data.transcript is string && data.transcript.size() <= 20000 &&
+             data.feedback is map &&
+             (!('audioData' in data) || (data.audioData is string && data.audioData.size() <= 1048576)) &&
+             (!('audioUrl' in data) || (data.audioUrl is string && data.audioUrl.size() <= 2000));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && 
+                       isValidUser(request.resource.data) && 
+                       uidUnchanged() &&
+                       request.resource.data.uid == userId;
+      allow update: if isOwner(userId) && 
+                       isValidUser(request.resource.data) && 
+                       uidNotModified() &&
+                       areImmutableFieldsUnchanged(['uid', 'createdAt']);
+      allow delete: if isOwner(userId);
+      
+      match /sessions/{sessionId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && 
+                         isValidSession(request.resource.data) &&
+                         request.resource.data.userId == userId;
+        allow update: if isOwner(userId) && 
+                         isValidSession(request.resource.data) &&
+                         areImmutableFieldsUnchanged(['id', 'userId', 'date']);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

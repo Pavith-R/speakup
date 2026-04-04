@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { Check, ChevronRight, ArrowLeft } from 'lucide-react';
 
@@ -29,8 +29,16 @@ export default function Onboarding() {
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [experience, setExperience] = useState('');
   const [weakness, setWeakness] = useState('');
-  const { updateProfile } = useUser();
+  const { updateProfile, user, isAuthReady } = useUser();
   const navigate = useNavigate();
+
+  if (!isAuthReady) {
+    return null;
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleNext = () => {
     if (step < 2) {
@@ -62,27 +70,35 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-950 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        <div className="mb-8 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-white/5 blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-white/5 blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-2xl relative z-10">
+        <div className="mb-12 flex items-center justify-between">
           {step > 0 ? (
-            <button onClick={handleBack} className="text-slate-400 hover:text-white transition-colors">
+            <button onClick={handleBack} className="text-zinc-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/5">
               <ArrowLeft className="w-6 h-6" />
             </button>
           ) : (
-            <div className="w-6" /> // Spacer
+            <div className="w-10" /> // Spacer
           )}
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {[0, 1, 2].map((i) => (
               <div 
                 key={i} 
-                className={`h-2 w-12 rounded-full transition-colors ${i <= step ? 'bg-electric-blue' : 'bg-navy-800'}`} 
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  i <= step ? 'w-12 bg-white' : 'w-3 bg-zinc-800'
+                }`} 
               />
             ))}
           </div>
           
-          <div className="w-6" /> // Spacer
+          <div className="w-10" /> // Spacer
         </div>
 
         <AnimatePresence mode="wait">
@@ -92,29 +108,33 @@ export default function Onboarding() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+              className="space-y-8"
             >
-              <h1 className="text-3xl md:text-4xl font-bold text-center text-white mb-2">
-                What do you want to improve?
-              </h1>
-              <p className="text-center text-slate-400 mb-8">Select all that apply.</p>
+              <div className="text-center">
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                  What do you want to improve?
+                </h1>
+                <p className="text-lg text-zinc-400">Select all that apply.</p>
+              </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {goals.map((goal) => (
                   <button
                     key={goal.id}
                     onClick={() => toggleGoal(goal.id)}
-                    className={`p-6 rounded-xl border-2 transition-all flex items-center gap-4 text-left group
+                    className={`p-6 rounded-xl border transition-all flex items-center gap-4 text-left group
                       ${selectedGoals.includes(goal.id) 
-                        ? 'border-electric-blue bg-electric-blue/10' 
-                        : 'border-navy-800 bg-navy-900 hover:border-navy-700'}`}
+                        ? 'bg-zinc-900 border-white text-white' 
+                        : 'bg-black border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'}`}
                   >
-                    <span className="text-2xl">{goal.icon}</span>
-                    <span className={`text-lg font-medium ${selectedGoals.includes(goal.id) ? 'text-electric-blue' : 'text-slate-300'}`}>
+                    <span className="text-3xl filter grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">{goal.icon}</span>
+                    <span className="text-lg font-medium">
                       {goal.label}
                     </span>
                     {selectedGoals.includes(goal.id) && (
-                      <Check className="ml-auto w-5 h-5 text-electric-blue" />
+                      <div className="ml-auto bg-white rounded-full p-1">
+                        <Check className="w-3 h-3 text-black" />
+                      </div>
                     )}
                   </button>
                 ))}
@@ -128,32 +148,36 @@ export default function Onboarding() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+              className="space-y-8"
             >
-              <h1 className="text-3xl md:text-4xl font-bold text-center text-white mb-2">
-                What's your experience level?
-              </h1>
-              <p className="text-center text-slate-400 mb-8">Be honest, we'll tailor the feedback.</p>
+              <div className="text-center">
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                  What's your experience level?
+                </h1>
+                <p className="text-lg text-zinc-400">Be honest, we'll tailor the feedback.</p>
+              </div>
               
               <div className="space-y-4">
                 {experienceLevels.map((level) => (
                   <button
                     key={level.id}
                     onClick={() => setExperience(level.id)}
-                    className={`w-full p-6 rounded-xl border-2 transition-all text-left group
+                    className={`w-full p-6 rounded-xl border transition-all text-left group
                       ${experience === level.id 
-                        ? 'border-electric-blue bg-electric-blue/10' 
-                        : 'border-navy-800 bg-navy-900 hover:border-navy-700'}`}
+                        ? 'bg-zinc-900 border-white text-white' 
+                        : 'bg-black border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'}`}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-lg font-medium ${experience === level.id ? 'text-electric-blue' : 'text-slate-300'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xl font-bold">
                         {level.label}
                       </span>
                       {experience === level.id && (
-                        <Check className="w-5 h-5 text-electric-blue" />
+                        <div className="bg-white rounded-full p-1">
+                          <Check className="w-3 h-3 text-black" />
+                        </div>
                       )}
                     </div>
-                    <p className="text-slate-400 text-sm">{level.description}</p>
+                    <p className={`text-base transition-colors ${experience === level.id ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`}>{level.description}</p>
                   </button>
                 ))}
               </div>
@@ -166,29 +190,33 @@ export default function Onboarding() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+              className="space-y-8"
             >
-              <h1 className="text-3xl md:text-4xl font-bold text-center text-white mb-2">
-                What's your biggest challenge?
-              </h1>
-              <p className="text-center text-slate-400 mb-8">We'll focus on this first.</p>
+              <div className="text-center">
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                  What's your biggest challenge?
+                </h1>
+                <p className="text-lg text-zinc-400">We'll focus on this first.</p>
+              </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {weaknesses.map((w) => (
                   <button
                     key={w.id}
                     onClick={() => setWeakness(w.id)}
-                    className={`p-6 rounded-xl border-2 transition-all flex items-center gap-4 text-left group
+                    className={`p-6 rounded-xl border transition-all flex items-center gap-4 text-left group
                       ${weakness === w.id 
-                        ? 'border-electric-blue bg-electric-blue/10' 
-                        : 'border-navy-800 bg-navy-900 hover:border-navy-700'}`}
+                        ? 'bg-zinc-900 border-white text-white' 
+                        : 'bg-black border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'}`}
                   >
-                    <span className="text-2xl">{w.icon}</span>
-                    <span className={`text-lg font-medium ${weakness === w.id ? 'text-electric-blue' : 'text-slate-300'}`}>
+                    <span className="text-3xl filter grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">{w.icon}</span>
+                    <span className="text-lg font-medium">
                       {w.label}
                     </span>
                     {weakness === w.id && (
-                      <Check className="ml-auto w-5 h-5 text-electric-blue" />
+                      <div className="ml-auto bg-white rounded-full p-1">
+                        <Check className="w-3 h-3 text-black" />
+                      </div>
                     )}
                   </button>
                 ))}
@@ -205,7 +233,7 @@ export default function Onboarding() {
               (step === 1 && !experience) ||
               (step === 2 && !weakness)
             }
-            className="bg-electric-blue hover:bg-electric-blue-dark disabled:opacity-50 disabled:cursor-not-allowed text-navy-950 font-bold py-4 px-12 rounded-full transition-all flex items-center gap-2 text-lg shadow-lg shadow-electric-blue/20"
+            className="bg-white text-black disabled:opacity-50 disabled:cursor-not-allowed font-bold py-4 px-12 rounded-full transition-all hover:bg-zinc-200 flex items-center gap-3 text-lg"
           >
             {step === 2 ? 'Get Started' : 'Next'}
             <ChevronRight className="w-5 h-5" />
