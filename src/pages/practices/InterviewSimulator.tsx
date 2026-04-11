@@ -44,13 +44,7 @@ export default function InterviewSimulator() {
   useEffect(() => {
     if (step === 'prep' || step === 'speaking') {
       timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            handleTimerComplete();
-            return 0;
-          }
-          return prev - 1;
-        });
+        setTimeLeft((prev) => prev - 1);
       }, 1000);
     }
     return () => {
@@ -58,13 +52,15 @@ export default function InterviewSimulator() {
     };
   }, [step]);
 
-  const handleTimerComplete = () => {
-    if (step === 'prep') {
-      startSpeaking();
-    } else if (step === 'speaking') {
-      stopRecording();
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      if (step === 'prep') {
+        startSpeaking();
+      } else if (step === 'speaking') {
+        stopRecording();
+      }
     }
-  };
+  }, [timeLeft, step]);
 
   const startSimulation = async () => {
     setError(null);

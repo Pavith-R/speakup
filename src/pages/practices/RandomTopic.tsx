@@ -36,13 +36,7 @@ export default function RandomTopic() {
   useEffect(() => {
     if (step === 'prep' || step === 'speaking') {
       timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            handleTimerComplete();
-            return 0;
-          }
-          return prev - 1;
-        });
+        setTimeLeft((prev) => prev - 1);
       }, 1000);
     }
     return () => {
@@ -50,13 +44,15 @@ export default function RandomTopic() {
     };
   }, [step]);
 
-  const handleTimerComplete = () => {
-    if (step === 'prep') {
-      startSpeaking();
-    } else if (step === 'speaking') {
-      stopRecording();
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      if (step === 'prep') {
+        startSpeaking();
+      } else if (step === 'speaking') {
+        stopRecording();
+      }
     }
-  };
+  }, [timeLeft, step]);
 
   const generateTopic = () => {
     const randomIndex = Math.floor(Math.random() * randomTopics.length);

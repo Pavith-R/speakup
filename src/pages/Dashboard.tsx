@@ -9,12 +9,22 @@ import { Plus, BarChart2, Calendar, Clock, TrendingUp, Activity, Timer, ArrowRig
 export default function Dashboard() {
   const { user, sessions } = useUser();
 
-  const sortedSessions = [...sessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const getValidDate = (date: any) => {
+    if (!date) return new Date();
+    if (date instanceof Date) return date;
+    if (typeof date.toDate === 'function') return date.toDate();
+    if (typeof date === 'object' && date.seconds) return new Date(date.seconds * 1000);
+    if (typeof date === 'object' && date._seconds) return new Date(date._seconds * 1000);
+    const parsed = new Date(date);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
+  const sortedSessions = [...sessions].sort((a, b) => getValidDate(b.date).getTime() - getValidDate(a.date).getTime());
   
   const chartData = [...sessions]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .sort((a, b) => getValidDate(a.date).getTime() - getValidDate(b.date).getTime())
     .map(s => ({
-      date: format(new Date(s.date), 'MMM d'),
+      date: format(getValidDate(s.date), 'MMM d'),
       score: s.score,
     }));
 
@@ -29,7 +39,7 @@ export default function Dashboard() {
   const calculateStreak = () => {
     if (sessions.length === 0) return 0;
 
-    const uniqueDates = [...new Set<number>(sessions.map(s => startOfDay(new Date(s.date)).getTime()))]
+    const uniqueDates = [...new Set<number>(sessions.map(s => startOfDay(getValidDate(s.date)).getTime()))]
       .map(time => new Date(time))
       .sort((a, b) => b.getTime() - a.getTime());
 
@@ -249,7 +259,7 @@ export default function Dashboard() {
                       Practice Session
                     </div>
                     <div className="text-sm text-zinc-500 flex items-center gap-2">
-                      <span>{format(new Date(session.date), 'MMM d, yyyy • h:mm a')}</span>
+                      <span>{format(getValidDate(session.date), 'MMM d, yyyy • h:mm a')}</span>
                     </div>
                   </div>
                 </div>
