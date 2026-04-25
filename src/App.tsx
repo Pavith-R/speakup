@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { UserProvider } from './context/UserContext';
-import { ThemeProvider } from './hooks/useTheme';
 import Layout from './components/Layout';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
@@ -18,11 +17,10 @@ import TermsOfService from './pages/TermsOfService';
 
 function App() {
   return (
-    <ThemeProvider>
-      <UserProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Auth />} />
+    <UserProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Auth />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
@@ -39,7 +37,6 @@ function App() {
           </Routes>
         </BrowserRouter>
       </UserProvider>
-    </ThemeProvider>
   );
 }
 

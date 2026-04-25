@@ -19,18 +19,6 @@
   --shadow-glow: 0 0 40px -10px rgba(255, 255, 255, 0.1);
 }
 
-.light {
-  --color-bg-app: #F5F5F5;
-  --color-bg-card: #FFFFFF;
-  --color-bg-card-hover: #FAFAFA;
-  --color-border: #E5E5E5;
-  
-  --color-primary: #000000;
-  --color-primary-foreground: #FFFFFF;
-  
-  --shadow-glow: 0 0 40px -10px rgba(0, 0, 0, 0.1);
-}
-
 body {
   background-color: var(--color-bg-app);
   color: #FAFAFA;
@@ -40,19 +28,10 @@ body {
   background-image: radial-gradient(circle at 50% 0%, #1a1a1a 0%, transparent 40%);
 }
 
-.light body {
-  color: #171717;
-  background-image: radial-gradient(circle at 50% 0%, #e5e5e5 0%, transparent 40%);
-}
-
 h1, h2, h3, h4, h5, h6 {
   color: #FFFFFF;
   font-weight: 700;
   letter-spacing: -0.025em;
-}
-
-.light h1, .light h2, .light h3, .light h4, .light h5, .light h6 {
-  color: #000000;
 }
 
 .glass-card {
@@ -69,14 +48,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .gradient-text {
   color: #FFFFFF;
-  /* Optional: subtle gradient if needed, but white is cleaner for this look */
-  /* background: linear-gradient(to right, #fff, #a1a1aa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent; */
-}
-
-.light .gradient-text {
-  color: #000000;
 }
 
 .gradient-bg {
@@ -87,10 +58,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .gradient-bg:hover {
   background: #e5e5e5;
-}
-
-.light .gradient-bg:hover {
-  background: #1a1a1a;
 }
 
 /* Utility for the secondary/outline button style */
@@ -104,27 +71,3 @@ h1, h2, h3, h4, h5, h6 {
   background: #1a1a1a;
   border-color: #444;
 }
-
-.light .btn-secondary {
-  border: 1px solid #e5e5e5;
-  color: #000;
-}
-
-.light .btn-secondary:hover {
-  background: #f5f5f5;
-  border-color: #d4d4d4;
-}
-
-/* Light mode overrides for hardcoded dark classes */
-.light .text-white { color: #000000 !important; }
-.light .bg-zinc-900\/50 { background-color: rgba(245, 245, 245, 0.8) !important; }
-.light .border-zinc-800 { border-color: #e5e5e5 !important; }
-.light .text-zinc-400 { color: #525252 !important; }
-.light .bg-zinc-800 { background-color: #e5e5e5 !important; }
-.light .text-zinc-300 { color: #171717 !important; }
-.light .hover\:text-white:hover { color: #000000 !important; }
-.light .hover\:bg-zinc-900\/50:hover { background-color: rgba(229, 229, 229, 0.8) !important; }
-.light .hover\:bg-zinc-700:hover { background-color: #d4d4d4 !important; }
-.light .text-zinc-500 { color: #737373 !important; }
-.light .bg-zinc-900 { background-color: #f5f5f5 !important; }
-

@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { useUser } from '../context/UserContext';
-import { useTheme } from '../hooks/useTheme';
-import { User, Settings as SettingsIcon, Bell, Shield, Headphones, Mic, Monitor, Sun, Moon } from 'lucide-react';
+import { User, Settings as SettingsIcon, Bell, Shield, Headphones, Mic, Monitor } from 'lucide-react';
 
 export default function Settings() {
   const { user } = useUser();
-  const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('account');
   const [practiceReminders, setPracticeReminders] = useState(true);
   const [weeklyReports, setWeeklyReports] = useState(true);
@@ -124,7 +122,6 @@ export default function Settings() {
 
   const tabs = [
     { id: 'account', label: 'Account Details', icon: User },
-    { id: 'preferences', label: 'App Preferences', icon: Monitor },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'devices', label: 'Audio Devices', icon: Headphones },
     { id: 'privacy', label: 'Privacy & Security', icon: Shield },
@@ -202,40 +199,6 @@ export default function Settings() {
                   <div className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 text-white capitalize">
                     {user?.goals?.join(', ') || 'Not set'}
                   </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'preferences' && (
-            <div className="space-y-6">
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white dark:text-white mb-2">App Preferences</h2>
-                <p className="text-zinc-400 dark:text-zinc-400">Customize your app experience.</p>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/50 dark:bg-zinc-900/50 border border-zinc-800 dark:border-zinc-800">
-                  <div>
-                    <h3 className="text-white dark:text-white font-medium mb-1">Theme</h3>
-                    <p className="text-sm text-zinc-400 dark:text-zinc-400">Switch between light and dark mode.</p>
-                  </div>
-                  <button 
-                    onClick={toggleTheme}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
-                  >
-                    {theme === 'dark' ? (
-                      <>
-                        <Sun className="w-4 h-4" />
-                        <span>Light Mode</span>
-                      </>
-                    ) : (
-                      <>
-                        <Moon className="w-4 h-4" />
-                        <span>Dark Mode</span>
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
             </div>
@@ -457,7 +420,7 @@ export default function Settings() {
             </div>
           )}
 
-          {activeTab !== 'account' && activeTab !== 'preferences' && activeTab !== 'notifications' && activeTab !== 'devices' && activeTab !== 'privacy' && (
+          {activeTab !== 'account' && activeTab !== 'notifications' && activeTab !== 'devices' && activeTab !== 'privacy' && (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-12">
               <SettingsIcon className="w-12 h-12 text-zinc-600" />
               <h3 className="text-xl font-medium text-zinc-300">Coming Soon</h3>
