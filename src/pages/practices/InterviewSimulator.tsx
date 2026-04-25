@@ -181,7 +181,7 @@ export default function InterviewSimulator() {
       }
 
     } catch (err: any) {
-      console.error('Analysis failed:', err);
+      console.error('Analysis failed:', err instanceof Error ? err.message : 'Unknown error');
       setError(err.message || 'Failed to analyze speech.');
       // If analysis fails, we might want to let them retry or skip?
       // For now, reset to config to avoid stuck state

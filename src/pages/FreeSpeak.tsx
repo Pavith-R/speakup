@@ -95,7 +95,6 @@ export default function Record() {
   };
 
   const handleAnalysis = async (audioBlob: Blob, mimeType: string) => {
-    console.log(`Analyzing audio: Size=${audioBlob.size} bytes, Type=${mimeType}`);
     if (audioBlob.size === 0) {
       setError('Recording failed: No audio data captured.');
       setIsAnalyzing(false);
@@ -110,8 +109,7 @@ export default function Record() {
       
       // Strip codecs from mimeType for Gemini API compatibility
       const simpleMimeType = mimeType.split(';')[0];
-      console.log(`Sending to Gemini with MIME type: ${simpleMimeType}`);
-
+      
       // Add a timeout to the analysis
       const analysisPromise = analyzeSpeech(base64Data, simpleMimeType, {
         goals: user?.goals || [],
@@ -124,7 +122,6 @@ export default function Record() {
       );
 
       const result = await Promise.race([analysisPromise, timeoutPromise]);
-      console.log('Analysis complete:', result);
       
       const audioUrl = URL.createObjectURL(audioBlob);
 
@@ -141,7 +138,7 @@ export default function Record() {
       await addSession(sessionData);
       navigate(`/feedback/${sessionData.id}`);
     } catch (err: any) {
-      console.error('Analysis failed:', err);
+      console.error('Analysis failed:', err instanceof Error ? err.message : 'Unknown error');
       setError(err.message || 'Failed to analyze speech. Please try again.');
       setIsAnalyzing(false);
     }

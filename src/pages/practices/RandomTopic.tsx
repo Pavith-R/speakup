@@ -172,7 +172,7 @@ export default function RandomTopic() {
       await addSession(sessionData);
       navigate(`/feedback/${sessionData.id}`);
     } catch (err: any) {
-      console.error('Analysis failed:', err);
+      console.error('Analysis failed:', err instanceof Error ? err.message : 'Unknown error');
       setError(err.message || 'Failed to analyze speech.');
       setStep('config'); // Reset to start on error
     }
