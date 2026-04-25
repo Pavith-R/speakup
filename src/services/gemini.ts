@@ -1,5 +1,8 @@
+import { auth } from '../firebase';
+
 // Define interfaces inline
 export interface Tip {
+
   text: string;
   example?: string;
   timestamp?: string; // Format: "MM:SS"
@@ -35,10 +38,16 @@ export async function analyzeSpeech(
     includeContentAnalysis?: boolean;
   }
 ): Promise<AnalysisResult> {
+  // Ensure user is authenticated
+  const currentUser = auth.currentUser;
+  if (!currentUser) throw new Error("User must be authenticated");
+  const token = await currentUser.getIdToken();
+
   const response = await fetch('/api/analyzeSpeech', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify({ audioBase64, mimeType, userContext }),
   });
@@ -56,10 +65,16 @@ export async function generateInterviewQuestions(
   resume?: string
 ): Promise<string[]> {
   try {
+    // Ensure user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error("User must be authenticated");
+    const token = await currentUser.getIdToken();
+
     const response = await fetch('/api/generateInterviewQuestions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ jobDescription, resume }),
     });

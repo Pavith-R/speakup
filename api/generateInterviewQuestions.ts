@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type } from '@google/genai';
+import { verifyToken } from './_verifyToken';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -9,6 +10,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const decodedToken = await verifyToken(req);
+
     const { jobDescription, resume } = req.body;
     const model = 'gemini-2.5-flash';
     

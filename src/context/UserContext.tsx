@@ -4,12 +4,15 @@ import {
   onAuthStateChanged, 
   signInWithPopup, 
   GoogleAuthProvider, 
-  signOut 
+  signOut,
+  deleteUser
 } from 'firebase/auth';
 import { 
   doc, 
   setDoc, 
-  getDoc, 
+  getDoc,
+  getDocs,
+  deleteDoc,
   updateDoc,
   collection, 
   onSnapshot, 
@@ -18,7 +21,7 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 
 enum OperationType {
   CREATE = 'create',
@@ -79,6 +82,7 @@ interface UserContextType {
   logout: () => Promise<void>;
   updateProfile: (profile: Partial<User>) => Promise<void>;
   addSession: (session: Omit<Session, 'userId' | 'date'>) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -259,8 +263,52 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteAccount = async () => {
+    if (!user) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    try {
+      // 1. Delete all sessions in subcollection
+      const sessionsRef = collection(db, 'users', user.uid, 'sessions');
+      const sessionsSnap = await getDocs(sessionsRef);
+      
+      const deletePromises = sessionsSnap.docs.map(docSnap => 
+        deleteDoc(doc(db, 'users', user.uid, 'sessions', docSnap.id))
+      );
+      await Promise.all(deletePromises);
+
+      // 3. Delete any audio files in Firebase Storage
+      try {
+        const storagePromises = sessionsSnap.docs.map(async docSnap => {
+          const audioRef = ref(storage, `users/${user.uid}/sessions/${docSnap.id}/audio.webm`);
+          try {
+            await deleteObject(audioRef);
+          } catch(e) {
+            // Ignore not found errors
+          }
+        });
+        await Promise.all(storagePromises);
+      } catch(e) {}
+
+      // 2. Delete the user document
+      const userRef = doc(db, 'users', user.uid);
+      await deleteDoc(userRef);
+
+      // 4. Delete Auth account
+      await deleteUser(currentUser);
+      
+      // 5. Sign out and clear context
+      setUser(null);
+      setSessions([]);
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      throw error;
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, sessions, isAuthReady, login, logout, updateProfile, addSession }}>
+    <UserContext.Provider value={{ user, sessions, isAuthReady, login, logout, updateProfile, addSession, deleteAccount }}>
       {children}
     </UserContext.Provider>
   );

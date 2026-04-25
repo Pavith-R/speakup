@@ -1,5 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type } from '@google/genai';
+import { verifyToken } from './_verifyToken';
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -9,10 +18,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const decodedToken = await verifyToken(req);
+    // User is authenticated, proceed with Gemini API call
+
     const { audioBase64, mimeType, userContext } = req.body;
+
 
     if (!audioBase64 || !mimeType || !userContext) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (audioBase64.length > 14_000_000) {
+      return res.status(413).json({ error: 'Audio file is too large. Maximum recording length is approximately 7 minutes.' });
+    }
+
+    const allowedMimeTypes = ["audio/webm", "audio/mp4", "audio/ogg", "audio/wav", "audio/mpeg"];
+    if (!allowedMimeTypes.includes(mimeType)) {
+      return res.status(400).json({ error: 'Unsupported audio format' });
     }
 
     const model = 'gemini-2.5-flash';

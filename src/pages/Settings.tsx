@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useUser } from '../context/UserContext';
 import { User, Settings as SettingsIcon, Bell, Shield, Headphones, Mic, Monitor } from 'lucide-react';
 
 export default function Settings() {
-  const { user } = useUser();
+  const { user, deleteAccount } = useUser();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('account');
   const [practiceReminders, setPracticeReminders] = useState(true);
   const [weeklyReports, setWeeklyReports] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   
   const [inputDevices, setInputDevices] = useState<MediaDeviceInfo[]>([]);
   const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([]);
@@ -25,6 +29,18 @@ export default function Settings() {
   const animationFrameRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount();
+      navigate('/auth');
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete account. You may need to log out and log back in before deleting.');
+      setIsDeleting(false);
+    }
+  };
 
   const stopMicTest = () => {
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
@@ -387,11 +403,15 @@ export default function Settings() {
                     <div>
                       <h3 className="text-red-400 font-medium mb-1">Delete Account</h3>
                       <p className="text-sm text-red-400/70">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                      {deleteError && (
+                        <p className="text-sm font-medium text-red-500 mt-2">{deleteError}</p>
+                      )}
                     </div>
                     {!showDeleteAccountConfirm ? (
                       <button 
                         onClick={() => setShowDeleteAccountConfirm(true)}
-                        className="px-4 py-2 rounded-lg font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors whitespace-nowrap"
+                        disabled={isDeleting}
+                        className="px-4 py-2 rounded-lg font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors whitespace-nowrap disabled:opacity-50"
                       >
                         Delete Account
                       </button>
@@ -399,18 +419,17 @@ export default function Settings() {
                       <div className="flex items-center gap-3">
                         <button 
                           onClick={() => setShowDeleteAccountConfirm(false)}
-                          className="px-4 py-2 rounded-lg font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+                          disabled={isDeleting}
+                          className="px-4 py-2 rounded-lg font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors disabled:opacity-50"
                         >
                           Cancel
                         </button>
                         <button 
-                          onClick={() => {
-                            // Mock deletion logic here
-                            setShowDeleteAccountConfirm(false);
-                          }}
-                          className="px-4 py-2 rounded-lg font-medium bg-red-500 text-white hover:bg-red-600 transition-colors whitespace-nowrap"
+                          onClick={handleDeleteAccount}
+                          disabled={isDeleting}
+                          className="px-4 py-2 rounded-lg font-medium bg-red-500 text-white hover:bg-red-600 transition-colors whitespace-nowrap disabled:opacity-50"
                         >
-                          Confirm Deletion
+                          {isDeleting ? 'Deleting...' : 'Confirm Deletion'}
                         </button>
                       </div>
                     )}

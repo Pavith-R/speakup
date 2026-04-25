@@ -7,5 +7,5 @@ esbuild.build({
   target: 'node20',
   outfile: 'dist/server.cjs',
   format: 'cjs',
-  external: ['express', 'vite', 'path', '@google/genai']
+  external: ['express', 'vite', 'path', '@google/genai', 'firebase-admin']
 }).catch(() => process.exit(1));
